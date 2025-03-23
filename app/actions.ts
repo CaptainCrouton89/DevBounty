@@ -1,25 +1,31 @@
 "use server";
 
-import { createClient } from "@/utils/supabase/server";
-import { encodedRedirect } from "@/utils/utils";
+import { createClient } from "@/db/supabase/server";
+import { encodedRedirect } from "@/lib/utils/utils";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 export const signUpAction = async (formData: FormData) => {
   const email = formData.get("email")?.toString();
   const password = formData.get("password")?.toString();
+  const fullName = formData.get("fullName")?.toString();
+  const isClient = formData.get("isClient")?.toString() === "true";
   const supabase = await createClient();
   const origin = (await headers()).get("origin");
 
   if (!email || !password) {
     return encodedRedirect(
       "error",
-      "/sign-up",
+      "/register",
       "Email and password are required"
     );
   }
 
-  const { error } = await supabase.auth.signUp({
+  console.log("email", email);
+  console.log("password", password);
+  console.log("fullName", fullName);
+  console.log("isClient", isClient);
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -29,13 +35,58 @@ export const signUpAction = async (formData: FormData) => {
 
   if (error) {
     console.error(error.code + " " + error.message);
-    return encodedRedirect("error", "/sign-up", error.message);
+    return encodedRedirect("error", "/register", error.message);
+  }
+
+  if (!data.user) {
+    return encodedRedirect("error", "/register", "Something went wrong");
+  }
+
+  const { error: insertError } = await supabase.from("users").insert({
+    id: data.user.id,
+    full_name: fullName!,
+    is_client: isClient,
+  });
+
+  if (isClient) {
+    const { error: insertClientError } = await supabase
+      .from("client_profiles")
+      .insert({
+        user_id: data.user.id,
+        payment_email: email,
+        average_rating: 0,
+        rating_count: 0,
+      });
+
+    if (insertClientError) {
+      console.error(insertClientError.code + " " + insertClientError.message);
+      return encodedRedirect("error", "/register", insertClientError.message);
+    }
+  } else {
+    const { error: insertUserError } = await supabase
+      .from("developer_profiles")
+      .insert({
+        user_id: data.user.id,
+        payment_email: email,
+        average_rating: 0,
+        rating_count: 0,
+      });
+
+    if (insertUserError) {
+      console.error(insertUserError.code + " " + insertUserError.message);
+      return encodedRedirect("error", "/register", insertUserError.message);
+    }
+  }
+
+  if (insertError) {
+    console.error(insertError.code + " " + insertError.message);
+    return encodedRedirect("error", "/register", insertError.message);
   } else {
     revalidatePath("/", "layout");
 
     return encodedRedirect(
       "success",
-      "/sign-in",
+      "/login",
       "Thanks for signing up! Please check your email for a verification link."
     );
   }
@@ -52,7 +103,7 @@ export const signInAction = async (formData: FormData) => {
   });
 
   if (error) {
-    return encodedRedirect("error", "/sign-in", error.message);
+    return encodedRedirect("error", "/login", error.message);
   }
 
   revalidatePath("/", "layout");

@@ -1,8 +1,8 @@
 "use client";
 
 import { signOutAction } from "@/app/actions";
-import { hasEnvVars } from "@/utils/supabase/check-env-vars";
-import { createClient } from "@/utils/supabase/client";
+import { hasEnvVars } from "@/db/supabase/check-env-vars";
+import { createClient } from "@/db/supabase/client";
 import { User } from "@supabase/supabase-js";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -35,7 +35,7 @@ export default function AuthButton() {
               disabled
               className="opacity-75 cursor-none pointer-events-none"
             >
-              <Link href="/sign-in">Sign in</Link>
+              <Link href="/login">Sign in</Link>
             </Button>
             <Button
               asChild
@@ -44,7 +44,7 @@ export default function AuthButton() {
               disabled
               className="opacity-75 cursor-none pointer-events-none"
             >
-              <Link href="/sign-up">Sign up</Link>
+              <Link href="/register">Sign up</Link>
             </Button>
           </div>
         </div>
@@ -65,10 +65,10 @@ export default function AuthButton() {
     <div className="flex gap-2 items-center">
       <ThemeToggleWrapper />
       <Button asChild size="sm" variant={"outline"}>
-        <Link href="/sign-in">Sign in</Link>
+        <Link href="/login">Sign in</Link>
       </Button>
       <Button asChild size="sm" variant={"default"}>
-        <Link href="/sign-up">Sign up</Link>
+        <Link href="/register">Sign up</Link>
       </Button>
     </div>
   );

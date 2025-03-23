@@ -1,0 +1,7 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Project ID is 52bec9cb-13af-4812-a4b0-5178b8f90e2d
+Always call get_next_step_for_project with that id after completing a task
